@@ -1,0 +1,113 @@
+document.addEventListener('DOMContentLoaded', function() {
+    var cart = JSON.parse(localStorage.getItem('cart')) || [];
+    var discountApplied = JSON.parse(localStorage.getItem('discountApplied')) || false;
+
+    var cartItemsContainer = document.getElementById('cart-items');
+    var cartTotalContainer = document.getElementById('cart-total');
+    var discountInput = document.getElementById('discount-input');
+    var applyDiscountButton = document.getElementById('apply-discount');
+
+    function displayCartItems() {
+        cartItemsContainer.innerHTML = '';
+        cart.forEach(function(item, index) {
+            var itemElement = document.createElement('div');
+            itemElement.classList.add('col-md-4');
+            itemElement.innerHTML = `
+                <div class="card mb-3">
+                    <img src="${getImage(item.name)}" class="card-img-top" alt="${item.name}">
+                    <div class="card-body">
+                        <h5 class="card-title">${item.name}</h5>
+                        <p class="card-text">$${item.price}</p>
+                        <div class="quantity-container">
+                            <button class="quantity-button decrease-quantity" data-index="${index}">-</button>
+                            <input type="number" class="quantity-input" value="${item.quantity}" disabled>
+                            <button class="quantity-button increase-quantity" data-index="${index}">+</button>
+                        </div>
+                        <button class="delete-button delete-item" data-index="${index}">
+                            <svg class="delete-svgIcon" viewBox="0 0 448 512">
+                                <path d="M135.2 17.7L128 32H32C14.3 32 0 46.3 0 64S14.3 96 32 96H416c17.7 0 32-14.3 32-32s-14.3-32-32-32H320l-7.2-14.3C307.4 6.8 296.3 0 284.2 0H163.8c-12.1 0-23.2 6.8-28.6 17.7zM416 128H32L53.2 467c1.6 25.3 22.6 45 47.9 45H346.9c25.3 0 46.3-19.7 47.9-45L416 128z"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            `;
+            cartItemsContainer.appendChild(itemElement);
+        });
+        displayCartTotal();
+    }
+
+    function displayCartTotal() {
+        var total = 0;
+        cart.forEach(function(item) {
+            total += parseFloat(item.price) * parseInt(item.quantity);
+        });
+        cartTotalContainer.innerHTML = `<p>Total : $${total.toFixed(2)}</p>`;
+    }
+
+    function getImage(itemName) {
+        switch (itemName) {
+            case 'Mouth Wash Listerine':
+                return 'fluid.jpg';
+            case 'Basketball':
+                return 'basketball.jpg';
+            case 'Headset':
+                return 'headset.jpg';
+            default:
+                return 'placeholder.jpg';
+        }
+    }
+
+    // Event listener for delete buttons
+    document.addEventListener('click', function(event) {
+        if (event.target.classList.contains('delete-item')) {
+            var index = parseInt(event.target.getAttribute('data-index'));
+            cart.splice(index, 1);
+            localStorage.setItem('cart', JSON.stringify(cart));
+            displayCartItems();
+        }
+    });
+
+    // Event listener for quantity increase buttons
+    document.addEventListener('click', function(event) {
+        if (event.target.classList.contains('increase-quantity')) {
+            var index = parseInt(event.target.getAttribute('data-index'));
+            cart[index].quantity++;
+            localStorage.setItem('cart', JSON.stringify(cart));
+            displayCartItems();
+        }
+    });
+
+    // Event listener for quantity decrease buttons
+    document.addEventListener('click', function(event) {
+        if (event.target.classList.contains('decrease-quantity')) {
+            var index = parseInt(event.target.getAttribute('data-index'));
+            if (cart[index].quantity > 1) {
+                cart[index].quantity--;
+                localStorage.setItem('cart', JSON.stringify(cart));
+                displayCartItems();
+            }
+        }
+    });
+
+    // Event listener for applying discount
+    applyDiscountButton.addEventListener('click', function() {
+        var discountCode = discountInput.value.trim().toLowerCase();
+        if (discountCode === 'harvard' && !discountApplied) {
+            // Apply 50% discount
+            cart.forEach(function(item) {
+                item.price *= 0.5;
+            });
+            discountApplied = true;
+            localStorage.setItem('cart', JSON.stringify(cart));
+            localStorage.setItem('discountApplied', JSON.stringify(discountApplied));
+            displayCartItems();
+        } else if (discountCode !== 'harvard') {
+            alert('try "harvard"');
+        } else if (discountApplied) {
+            alert('Discount has already been applied.');
+        }
+    });
+
+    // Display cart items on page load
+    displayCartItems();
+});
